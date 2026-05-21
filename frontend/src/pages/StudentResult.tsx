@@ -103,7 +103,7 @@ const StudentResult: React.FC = () => {
           </div>
           <div className="kpi-card">
             <div className="label">Thời gian làm</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{attempt?.time_spent}s</div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{attempt?.duration_seconds}s</div>
           </div>
           <div className="kpi-card">
             <div className="label">Xếp hạng</div>

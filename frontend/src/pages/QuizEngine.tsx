@@ -135,7 +135,7 @@ const QuizEngine: React.FC = () => {
           topic_id: topicId,
           score: finalScore,
           correct_count: correctCount,
-          time_spent: sessionInfo ? sessionInfo.duration_seconds - remaining : 0
+          duration_seconds: sessionInfo ? sessionInfo.duration_seconds - remaining : 0
         })
         .select()
         .single();

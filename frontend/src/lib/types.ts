@@ -72,6 +72,7 @@ export interface Attempt {
   started_at: string
   submitted_at: string | null
   duration_seconds: number | null
+  time_spent: number
   correct_count: number
   total_questions: number
   speed_bonus: number

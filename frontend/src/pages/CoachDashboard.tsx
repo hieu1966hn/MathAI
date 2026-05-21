@@ -134,6 +134,41 @@ const CoachDashboard: React.FC = () => {
     }
   };
 
+  const handleClearSession = async () => {
+    if (!selectedRoom) return;
+    if (!window.confirm('Xóa toàn bộ dữ liệu phiên thi của phòng này? Hành động không thể hoàn tác.')) return;
+    
+    try {
+      // 1. Xóa tất cả sessions của room
+      await supabase
+        .from('quiz_sessions')
+        .delete()
+        .eq('room_id', selectedRoom.id);
+
+      // 2. Xóa tất cả attempts của room (cascade sẽ xóa answers)
+      await supabase
+        .from('attempts')
+        .delete()
+        .eq('room_id', selectedRoom.id);
+
+      // 3. Reset tất cả participants về trạng thái ban đầu
+      await supabase
+        .from('participants')
+        .update({ 
+          is_ready: false, 
+          status: 'joined',
+          current_session_id: null
+        })
+        .eq('room_id', selectedRoom.id);
+
+      setCurrentSession(null);
+      loadRoomData(selectedRoom.id);
+      alert('Đã làm sạch phòng thi thành công!');
+    } catch (err: any) {
+      alert('Lỗi khi xóa: ' + err.message);
+    }
+  };
+
 
   if (!isAuth) {
     return (

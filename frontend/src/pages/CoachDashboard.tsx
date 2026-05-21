@@ -93,6 +93,18 @@ const CoachDashboard: React.FC = () => {
     if (!selectedRoom) return;
     setIsPreparing(true);
     try {
+      // Lấy session_number mới nhất để tránh trùng unique(room_id, session_number)
+      const { data: latestSessions, error: latestError } = await supabase
+        .from('quiz_sessions')
+        .select('session_number')
+        .eq('room_id', selectedRoom.id)
+        .order('session_number', { ascending: false })
+        .limit(1);
+
+      if (latestError) throw latestError;
+
+      const nextSessionNumber = (latestSessions?.[0]?.session_number || 0) + 1;
+
       // Tạo 4 sessions song song cho 4 lớp (6, 7, 8, 9)
       const topicsByGrade = [
         { grade: 6, topic_id: 'grade6-fractions-basic' },
@@ -101,9 +113,10 @@ const CoachDashboard: React.FC = () => {
         { grade: 9, topic_id: 'grade9-percentages-ratios' }
       ];
 
-      const sessionInserts = topicsByGrade.map(t => ({
+      const sessionInserts = topicsByGrade.map((t, index) => ({
         room_id: selectedRoom.id,
         topic_id: t.topic_id,
+        session_number: nextSessionNumber + index,
         status: 'ready',
         duration_seconds: 25
       }));

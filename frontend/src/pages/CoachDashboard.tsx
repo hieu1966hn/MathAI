@@ -93,22 +93,35 @@ const CoachDashboard: React.FC = () => {
     if (!selectedRoom) return;
     setIsPreparing(true);
     try {
-      // Logic giả lập gọi Gemini Proxy để tạo session mới
-      // Trong thực tế sẽ gọi Edge Function. Ở đây ta insert trực tiếp session ready.
-      const { data: session, error: sError } = await supabase
+      // Tạo 4 sessions song song cho 4 lớp (6, 7, 8, 9)
+      const topicsByGrade = [
+        { grade: 6, topic_id: 'grade6-fractions-basic' },
+        { grade: 7, topic_id: 'grade7-ratios-basic' },
+        { grade: 8, topic_id: 'grade8-rational-expressions' },
+        { grade: 9, topic_id: 'grade9-percentages-ratios' }
+      ];
+
+      const sessionInserts = topicsByGrade.map(t => ({
+        room_id: selectedRoom.id,
+        topic_id: t.topic_id,
+        status: 'ready',
+        duration_seconds: 25
+      }));
+
+      const { data: sessions, error: sError } = await supabase
         .from('quiz_sessions')
-        .insert({
-          room_id: selectedRoom.id,
-          topic_id: 'grade6-fractions-basic', // Topic seed có sẵn
-          status: 'ready',
-          duration_seconds: 25
-        })
-        .select()
-        .single();
+        .insert(sessionInserts)
+        .select();
 
       if (sError) throw sError;
-      setCurrentSession(session);
-      alert('Đã chuẩn bị xong câu hỏi AI cho vòng thi mới!');
+
+      // Lưu session đầu tiên để hiển thị (hoặc có thể bỏ qua)
+      if (sessions && sessions.length > 0) {
+        setCurrentSession(sessions[0]);
+      }
+
+      loadRoomData(selectedRoom.id);
+      alert(`Đã chuẩn bị xong ${sessions?.length || 4} phiên thi cho 4 lớp!`);
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -117,18 +130,37 @@ const CoachDashboard: React.FC = () => {
   };
 
   const handleStartQuiz = async () => {
-    if (!currentSession) return;
+    if (!selectedRoom) return;
     try {
+      // Lấy tất cả sessions có status='ready' trong phòng
+      const { data: readySessions, error: fetchError } = await supabase
+        .from('quiz_sessions')
+        .select('id')
+        .eq('room_id', selectedRoom.id)
+        .eq('status', 'ready');
+
+      if (fetchError) throw fetchError;
+
+      if (!readySessions || readySessions.length === 0) {
+        alert('Không có phiên thi nào sẵn sàng để bắt đầu.');
+        return;
+      }
+
+      // Start tất cả sessions cùng lúc với cùng start_time
+      const startTime = new Date().toISOString();
+      const sessionIds = readySessions.map(s => s.id);
+
       const { error: upError } = await supabase
         .from('quiz_sessions')
         .update({ 
           status: 'active',
-          start_time: new Date().toISOString()
+          start_time: startTime
         })
-        .eq('id', currentSession.id);
+        .in('id', sessionIds);
       
       if (upError) throw upError;
-      loadRoomData(currentSession.room_id);
+      loadRoomData(selectedRoom.id);
+      alert(`Đã bắt đầu ${sessionIds.length} phiên thi đồng thời!`);
     } catch (err: any) {
       alert(err.message);
     }
@@ -221,7 +253,7 @@ const CoachDashboard: React.FC = () => {
               <button 
                 className="button-secondary" 
                 onClick={handlePrepareSession}
-                disabled={isPreparing || (currentSession?.status === 'ready' || currentSession?.status === 'active')}
+                disabled={isPreparing}
               >
                 {isPreparing ? '⏳ Đang tạo câu hỏi AI...' : '🔄 Chuẩn bị vòng thi mới'}
               </button>
@@ -229,7 +261,7 @@ const CoachDashboard: React.FC = () => {
               <button 
                 className="button-primary" 
                 onClick={handleStartQuiz}
-                disabled={!currentSession || currentSession.status !== 'ready' || stats.ready === 0}
+                disabled={stats.ready === 0}
                 style={{ fontSize: '1.2rem', padding: '16px' }}
               >
                 🚀 BẮT ĐẦU NGAY ({stats.ready} HV sẵn sàng)

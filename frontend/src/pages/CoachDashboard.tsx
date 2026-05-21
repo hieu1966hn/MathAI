@@ -99,7 +99,7 @@ const CoachDashboard: React.FC = () => {
         .from('quiz_sessions')
         .insert({
           room_id: selectedRoom.id,
-          topic_id: 'on-tap-phan-so', // Mặc định cho demo
+          topic_id: 'grade6-fractions-basic', // Topic seed có sẵn
           status: 'ready',
           duration_seconds: 25
         })

@@ -136,7 +136,7 @@ const CoachDashboard: React.FC = () => {
 
   const handleClearSession = async () => {
     if (!selectedRoom) return;
-    if (!window.confirm('Xóa toàn bộ dữ liệu phiên thi của phòng này? Hành động không thể hoàn tác.')) return;
+    if (!window.confirm('Xóa TOÀN BỘ học viên và dữ liệu thi của phòng này? Hành động không thể hoàn tác.')) return;
     
     try {
       // 1. Xóa tất cả sessions của room
@@ -145,25 +145,15 @@ const CoachDashboard: React.FC = () => {
         .delete()
         .eq('room_id', selectedRoom.id);
 
-      // 2. Xóa tất cả attempts của room (cascade sẽ xóa answers)
-      await supabase
-        .from('attempts')
-        .delete()
-        .eq('room_id', selectedRoom.id);
-
-      // 3. Reset tất cả participants về trạng thái ban đầu
+      // 2. Xóa tất cả participants (cascade sẽ tự xóa attempts và answers)
       await supabase
         .from('participants')
-        .update({ 
-          is_ready: false, 
-          status: 'joined',
-          current_session_id: null
-        })
+        .delete()
         .eq('room_id', selectedRoom.id);
 
       setCurrentSession(null);
       loadRoomData(selectedRoom.id);
-      alert('Đã làm sạch phòng thi thành công!');
+      alert('Đã làm sạch phòng hoàn toàn! Tất cả học viên đã bị xóa.');
     } catch (err: any) {
       alert('Lỗi khi xóa: ' + err.message);
     }

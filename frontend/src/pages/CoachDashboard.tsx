@@ -216,6 +216,14 @@ const CoachDashboard: React.FC = () => {
                 🔥 TRẬN ĐẤU ĐANG DIỄN RA
               </div>
             )}
+
+            <button 
+              className="button-secondary" 
+              onClick={handleClearSession}
+              style={{ marginTop: '16px', borderColor: 'var(--danger)', color: 'var(--danger)' }}
+            >
+              🗑️ Làm sạch phòng
+            </button>
           </div>
 
           {/* Quick Stats */}

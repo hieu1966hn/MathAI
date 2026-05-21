@@ -133,9 +133,12 @@ const QuizEngine: React.FC = () => {
           participant_id: participantId,
           room_id: roomId,
           topic_id: topicId,
-          score: finalScore,
+          submitted_at: new Date().toISOString(),
+          duration_seconds: sessionInfo ? sessionInfo.duration_seconds - remaining : 0,
           correct_count: correctCount,
-          duration_seconds: sessionInfo ? sessionInfo.duration_seconds - remaining : 0
+          total_questions: questions.length,
+          speed_bonus: speedBonus,
+          score: finalScore
         })
         .select()
         .single();

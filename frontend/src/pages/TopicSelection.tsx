@@ -75,7 +75,7 @@ const TopicSelection: React.FC = () => {
       }
 
       // Update participant: mark ready and link to session
-      await supabase
+      const { error: updateError } = await supabase
         .from('participants')
         .update({ 
           confidence, 
@@ -84,6 +84,8 @@ const TopicSelection: React.FC = () => {
           current_session_id: currentSession.id
         })
         .eq('id', participantId);
+
+      if (updateError) throw updateError;
 
       // Navigate to waiting room
       navigate(`/room/${roomId}/waiting?p=${participantId}`);

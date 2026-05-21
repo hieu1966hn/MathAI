@@ -72,10 +72,12 @@ const StudentResult: React.FC = () => {
     if (!participantId || !roomId) return;
     try {
       // 1. Đánh dấu sẵn sàng trở lại
-      await supabase
+      const { error: updateError } = await supabase
         .from('participants')
         .update({ is_ready: true, status: 'waiting_start' })
         .eq('id', participantId);
+
+      if (updateError) throw updateError;
 
       // 2. Quay về màn hình chờ
       navigate(`/room/${roomId}/waiting?p=${participantId}`);
